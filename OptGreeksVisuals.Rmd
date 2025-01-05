@@ -2,7 +2,9 @@
 title: "Option Greeks Visualized"
 author: "Arun Sadanand"
 date: "2025-01-03"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -65,19 +67,19 @@ S <- seq(from = K-K/4, to = K+K/4, length.out = 1000)
 
 # We will examine option value as time progresses, 
 # ie. as time to maturity declines from 3 months to 1 day
-taus <- c(12/52, 10/52, 8/52, 6/52, 4/52, 2/52, 1/365, 0)
+taus <- c(12/52, 10/52, 8/52, 6/52, 4/52, 2/52, 5/365, 1/365, 0)
 ```
 
 ```{r}
 source("options.R") # My functions for option price and greeks
 
 call_payoffs <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   call_payoffs[i,] <- opt_bs_price(S, K, taus[i], vol)
 }
 
 put_payoffs <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   put_payoffs[i,] <- opt_bs_price(S, K, taus[i], vol, is_call = FALSE)
 }
 ```
@@ -108,18 +110,21 @@ put_payoffs_tdf <- make_it_tidy(put_payoffs, S, taus)
 ```{r}
 library(ggplot2)
 library(glue)
+library(scales) # used to pick colors
 
 # A function to make our plot given a tidy dataframe
 make_plot <- function(tdf, opt_type, y_label) {
+  breaks <- unique(floor(tdf$Maturity * 365)) # Convert tau to days
+  colors <- gradient_n_pal(c("lightblue", "navy"))(seq(0, 1, length.out = length(breaks))) # pick colors based on number of days
   opt_plot <- ggplot(tdf, 
                      aes(x = UnderlyingValue, 
                          y = OptCalc, 
                          group = Maturity, 
-                         color = Maturity)) +
+                         color = factor(floor(Maturity * 365)))) + 
     geom_line(linewidth = 1) +
-    scale_color_gradient(low = "navy", high="lightblue",
-                         trans = "identity",
-                         labels = function(x) floor(x*365)) + # Convert tau to days
+    scale_color_manual(values = colors,
+                       breaks = as.character(breaks),
+                       labels = breaks) +
     labs(title = glue("{opt_type} {y_label} at different levels of Moneyness and Maturity"),
          x = "Price of Underlying",
          y = glue("{y_label}"),
@@ -156,12 +161,12 @@ We can confirm what delta looks like using our finite difference function.
 
 ```{r}
 call_deltas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   call_deltas[i,] <- opt_get_delta(S, K, taus[i], vol)
 }
 
 put_deltas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   put_deltas[i,] <- opt_get_delta(S, K, taus[i], vol, is_call = FALSE)
 }
 
@@ -196,13 +201,15 @@ Since $\Delta_C$ and $\Delta_P$ resemble the shape of the normal distribution fu
 This is confirmed by our finite difference second derivative function.
 
 ```{r}
+taus <- taus[1:length(taus)-1] # remove '0' so that chart shape for other values of tau are clearly visible
+
 call_gammas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   call_gammas[i,] <- opt_get_gamma(S, K, taus[i], vol)
 }
 
 put_gammas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   put_gammas[i,] <- opt_get_gamma(S, K, taus[i], vol, is_call = FALSE)
 }
 
@@ -226,12 +233,12 @@ Theta is usually negative if we are long the option, but it can be positive if w
 
 ```{r}
 call_thetas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   call_thetas[i,] <- opt_get_theta(S, K, taus[i], vol)
 }
 
 put_thetas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   put_thetas[i,] <- opt_get_theta(S, K, taus[i], vol, is_call = FALSE)
 }
 
@@ -255,12 +262,12 @@ Volatility matters most when the option is 'near-the-money', as shown by how veg
 
 ```{r}
 call_vegas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   call_vegas[i,] <- opt_get_vega(S, K, taus[i], vol)
 }
 
 put_vegas <- array(NA, dim = c(length(taus), length(S)))
-for(i in 1:length(taus)) {
+for(i in seq_along(taus)) {
   put_vegas[i,] <- opt_get_vega(S, K, taus[i], vol, is_call = FALSE)
 }
 
