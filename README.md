@@ -1,6 +1,6 @@
 # Option Greeks at different levels of Moneyness and Maturity
 
-*Completion Date: January 2<sup>nd</sup>, 2025*
+*Completion Date: January 3<sup>rd</sup>, 2025*
 
 How do option values and greeks evolve as the contract approaches maturity?
 The Black-Scholes option pricing framework defines the relationship between implied volatility of the underlying, the time remaining to expiry, and the value of the option.
